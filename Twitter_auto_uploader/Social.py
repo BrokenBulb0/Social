@@ -6,7 +6,6 @@ import time
 import os
 import tkinter as tk
 from datetime import datetime
-from tkcalendar import Calendar, DateEntry
 
 
 class TwitterPoster:
@@ -14,6 +13,7 @@ class TwitterPoster:
         self.root = root
         self.root.title("Twitter Poster")
 
+        # Entry widgets
         self.api_key_label = tk.Label(root, text="API Key:")
         self.api_key_entry = tk.Entry(root)
 
@@ -37,10 +37,9 @@ class TwitterPoster:
         self.browse_button = tk.Button(
             root, text="Browse", command=self.browse_image)
 
-        self.datetime_label = tk.Label(root, text="Select Date and Time:")
-        self.datetime_picker = DateEntry(
-            root, width=12, background='darkblue', foreground='white', borderwidth=2)
-        self.time_picker = tk.Entry(root, width=12)
+        self.datetime_label = tk.Label(
+            root, text="Enter Date and Time (DD/MM/YYYY HH:MM):")
+        self.datetime_entry = tk.Entry(root, width=20)
 
         self.post_button = tk.Button(
             root, text="Post Tweet", command=self.post_tweet)
@@ -69,8 +68,7 @@ class TwitterPoster:
         self.browse_button.grid(row=6, column=3, pady=5, sticky="w")
 
         self.datetime_label.grid(row=7, column=0, sticky="e")
-        self.datetime_picker.grid(row=7, column=1, padx=10)
-        self.time_picker.grid(row=7, column=2, padx=10)
+        self.datetime_entry.grid(row=7, column=1, columnspan=2, padx=10)
 
         self.post_button.grid(row=8, column=1, pady=10)
 
@@ -91,11 +89,7 @@ class TwitterPoster:
         message = self.message_entry.get()
         description = self.description_entry.get()
         image_path = self.image_path_entry.get()
-
-        selected_datetime = self.datetime_picker.get_date()
-        selected_time = self.time_picker.get()
-
-        datetime_str = f"{selected_datetime} {selected_time}"
+        datetime_str = self.datetime_entry.get()
 
         try:
             self.validate_input(api_key, api_secret, access_token, access_secret,
@@ -121,10 +115,10 @@ class TwitterPoster:
 
     def parse_datetime(self, datetime_str):
         try:
-            return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+            return datetime.strptime(datetime_str, '%d/%m/%Y %H:%M')
         except ValueError:
             raise ValueError(
-                "Please enter a valid date and time format (YYYY-MM-DD HH:MM:SS).")
+                "Please enter a valid date and time format (DD/MM/YYYY HH:MM).")
 
     def check_datetime(self, post_datetime):
         current_datetime = datetime.now()
@@ -167,15 +161,11 @@ class TwitterPoster:
             raise tweepy.TweepError(f"Tweet post failed: {e}")
 
     def show_success_message(self, time_seconds):
-        # Provide visual feedback to the user
         messagebox.showinfo("Success", "Tweet posted successfully!")
-        # Delay to allow the user to see the success message
         time.sleep(time_seconds)
 
     def handle_error(self, e):
-        # Log the specific error details
         self.logger.error(f"An unexpected error occurred: {e}")
-        # Display a detailed error message to the user
         messagebox.showerror("Error", f"An unexpected error occurred: {e}")
 
 
