@@ -47,9 +47,6 @@ pip install -r requirements.txt
 
 2. Replace the placeholder values in `config.py` with your Twitter API credentials.
 
-## Contributing
-
-Feel free to contribute to this project! Fork the repository, make your changes, and submit a pull request.
 
 ## License
 
