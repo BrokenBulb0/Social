@@ -1,5 +1,5 @@
 ## Work in progress...
-# Twitter Poster App
+# Social
 
 This is a simple Twitter poster application that allows users to schedule tweets with images. The application is built using Python and Tkinter for the graphical user interface, Tweepy for interacting with the Twitter API, and tkcalendar for date and time input.
 
