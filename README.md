@@ -26,7 +26,7 @@ pip install -r requirements.txt
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/BrokenBulb0/TwitterPosterApp.git
+   git clone https://github.com/BrokenBulb0/Social.git
    ```
 
 2. Install dependencies:
