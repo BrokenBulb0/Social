@@ -37,11 +37,10 @@ class TwitterPoster:
         self.browse_button = tk.Button(
             root, text="Browse", command=self.browse_image)
 
-        self.datetime_label = tk.Label(root, text="Set Date and Time:")
-        self.calendar = Calendar(root, selectmode='day', year=datetime.now(
-        ).year, month=datetime.now().month, day=datetime.now().day)
-        self.time_entry = DateEntry(
+        self.datetime_label = tk.Label(root, text="Select Date and Time:")
+        self.datetime_picker = DateEntry(
             root, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.time_picker = tk.Entry(root, width=12)
 
         self.post_button = tk.Button(
             root, text="Post Tweet", command=self.post_tweet)
@@ -70,8 +69,8 @@ class TwitterPoster:
         self.browse_button.grid(row=6, column=3, pady=5, sticky="w")
 
         self.datetime_label.grid(row=7, column=0, sticky="e")
-        self.calendar.grid(row=7, column=1, columnspan=2, padx=10)
-        self.time_entry.grid(row=7, column=3, padx=10)
+        self.datetime_picker.grid(row=7, column=1, padx=10)
+        self.time_picker.grid(row=7, column=2, padx=10)
 
         self.post_button.grid(row=8, column=1, pady=10)
 
@@ -93,10 +92,10 @@ class TwitterPoster:
         description = self.description_entry.get()
         image_path = self.image_path_entry.get()
 
-        selected_date = self.calendar.get_date()
-        selected_time = self.time_entry.get()
+        selected_datetime = self.datetime_picker.get_date()
+        selected_time = self.time_picker.get()
 
-        datetime_str = f"{selected_date} {selected_time}"
+        datetime_str = f"{selected_datetime} {selected_time}"
 
         try:
             self.validate_input(api_key, api_secret, access_token, access_secret,
