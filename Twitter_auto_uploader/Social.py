@@ -1,6 +1,5 @@
-from logging import RootLogger
 from tkinter import filedialog, messagebox
-from typing import Self
+import logging
 import tweepy
 from PIL import Image, ImageTk
 import time
@@ -39,8 +38,6 @@ class TwitterPoster:
             root, text="Browse", command=self.browse_image)
 
         self.datetime_label = tk.Label(root, text="Set Date and Time:")
-
-        # Use DateEntry widget from tkcalendar for date input
         self.calendar = Calendar(root, selectmode='day', year=datetime.now(
         ).year, month=datetime.now().month, day=datetime.now().day)
         self.time_entry = DateEntry(
@@ -73,12 +70,14 @@ class TwitterPoster:
         self.browse_button.grid(row=6, column=3, pady=5, sticky="w")
 
         self.datetime_label.grid(row=7, column=0, sticky="e")
-
-        # Adjust column and row for calendar and time_entry
         self.calendar.grid(row=7, column=1, columnspan=2, padx=10)
         self.time_entry.grid(row=7, column=3, padx=10)
 
         self.post_button.grid(row=8, column=1, pady=10)
+
+        # Initialize logger
+        logging.basicConfig(filename='twitter_poster.log', level=logging.ERROR)
+        self.logger = logging.getLogger(__name__)
 
     def browse_image(self):
         file_path = filedialog.askopenfilename()
@@ -99,55 +98,86 @@ class TwitterPoster:
 
         datetime_str = f"{selected_date} {selected_time}"
 
+        try:
+            self.validate_input(api_key, api_secret, access_token, access_secret,
+                                message, description, image_path, datetime_str)
+            post_datetime = self.parse_datetime(datetime_str)
+            self.check_datetime(post_datetime)
+            time_seconds = self.calculate_time_seconds(post_datetime)
+            auth = self.get_auth(api_key, api_secret,
+                                 access_token, access_secret)
+            api = tweepy.API(auth)
+            image_path_resized = self.resize_image(image_path)
+            self.validate_tweet_content(message, description)
+            self.tweet(api, message, description, image_path_resized)
+            self.show_success_message(time_seconds)
+        except Exception as e:
+            self.handle_error(e)
+
+    def validate_input(self, api_key, api_secret, access_token, access_secret,
+                       message, description, image_path, datetime_str):
         if not all([api_key, api_secret, access_token, access_secret,
                     message, description, image_path, datetime_str]):
-            messagebox.showerror(
-                "Error", "Please provide all required information.")
-            return
+            raise ValueError("Please provide all required information.")
 
+    def parse_datetime(self, datetime_str):
         try:
-            # Convert the datetime string to a datetime object
-            post_datetime = datetime.strptime(
-                datetime_str, '%Y-%m-%d %H:%M:%S')
+            return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
         except ValueError:
-            messagebox.showerror(
-                "Error", "Please enter a valid date and time format (YYYY-MM-DD HH:MM:SS).")
-            return
+            raise ValueError(
+                "Please enter a valid date and time format (YYYY-MM-DD HH:MM:SS).")
 
+    def check_datetime(self, post_datetime):
         current_datetime = datetime.now()
-
         if post_datetime < current_datetime:
-            messagebox.showerror(
-                "Error", "The specified date and time must be in the future.")
-            return
+            raise ValueError(
+                "The specified date and time must be in the future.")
 
-        time_seconds = (post_datetime - current_datetime).total_seconds()
+    def calculate_time_seconds(self, post_datetime):
+        current_datetime = datetime.now()
+        return (post_datetime - current_datetime).total_seconds()
 
+    def get_auth(self, api_key, api_secret, access_token, access_secret):
         auth = tweepy.OAuthHandler(api_key, api_secret)
         auth.set_access_token(access_token, access_secret)
-        api = tweepy.API(auth)
+        return auth
 
+    def resize_image(self, image_path):
         try:
-            # Load image and resize
             image = Image.open(image_path)
             image = image.resize((500, 500), Image.ANTIALIAS)
             image_path_resized = "resized_image.png"
             image.save(image_path_resized)
+            return image_path_resized
+        except FileNotFoundError:
+            raise FileNotFoundError("Image file not found.")
+        except IOError:
+            raise IOError("Error processing the image file.")
 
-            # Tweet
+    def validate_tweet_content(self, message, description):
+        if len(message) + len(description) > 280:
+            raise ValueError(
+                "The total length of the tweet message and description exceeds 280 characters.")
+
+    def tweet(self, api, message, description, image_path_resized):
+        try:
             tweet = f"{message}\n\nDescription: {description}"
-            api.update_with_media(image_path_resized, status=tweet)
-            print("Tweet posted successfully!")
-
-            # Delay to allow the user to see the success message
-            time.sleep(time_seconds)
-
+            api.update_status(status=tweet, media_ids=[
+                              api.media_upload(image_path_resized).media_id_string])
         except tweepy.TweepError as e:
-            messagebox.showerror("Error", f"Tweet post failed: {e}")
-        finally:
-            # Clean up resized image
-            if os.path.exists(image_path_resized):
-                os.remove(image_path_resized)
+            raise tweepy.TweepError(f"Tweet post failed: {e}")
+
+    def show_success_message(self, time_seconds):
+        # Provide visual feedback to the user
+        messagebox.showinfo("Success", "Tweet posted successfully!")
+        # Delay to allow the user to see the success message
+        time.sleep(time_seconds)
+
+    def handle_error(self, e):
+        # Log the specific error details
+        self.logger.error(f"An unexpected error occurred: {e}")
+        # Display a detailed error message to the user
+        messagebox.showerror("Error", f"An unexpected error occurred: {e}")
 
 
 if __name__ == "__main__":
