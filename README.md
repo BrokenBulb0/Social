@@ -54,6 +54,3 @@ Feel free to contribute to this project! Fork the repository, make your changes,
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-```
-
-Make sure to replace the placeholders like `https://github.com/BrokenBulb0/TwitterPosterApp.git` with the actual URL of your GitHub repository. Feel free to add more sections or details based on your project's needs.
